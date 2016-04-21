@@ -3,6 +3,10 @@
  */
 package it.reexon.checksum;
 
+import java.io.File;
+import java.io.IOException;
+
+import it.reexon.lib.security.checksums.GenerateSecureChecksum;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -19,6 +23,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+
 /**
  * @author Marco Velluto
  * @since Java 1.8
@@ -26,12 +31,16 @@ import javafx.stage.Stage;
 public class Application extends javafx.application.Application
 {
 
-    final Button button = new Button("Send");
+    final Button checksumCalculateButton = new Button("Calculate");
+    final Button fileChooserButton = new Button("Load File");
+
     final Label notification = new Label();
-    final TextField subject = new TextField("");
+    final TextField selectedFilePath = new TextField("");
     final TextArea text = new TextArea("");
 
     String address = new String(" ");
+
+    File fileSelected;
 
     @Override
     public void start(Stage stage)
@@ -43,7 +52,7 @@ public class Application extends javafx.application.Application
         Menu menuFile = new Menu("File");
         Menu menuEdit = new Menu("Edit");
         Menu menuView = new Menu("View");
-        
+
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File..");
 
@@ -58,32 +67,54 @@ public class Application extends javafx.application.Application
         );
             //@f:on
 
-        final ComboBox<String> priorityComboBox = new ComboBox<String>();
+        final ComboBox<String> algorithms = new ComboBox<String>();
         //@f:off
-        priorityComboBox.getItems().addAll(
-            "Highest",
-            "High",
-            "Normal",
-            "Low",
-            "Lowest" 
+        algorithms.getItems().addAll(
+            "MD2",
+            "MD5",
+            "SHA-1",
+            "SHA-256",
+            "SHA-224",
+            "SHA-384",
+            "SHA-512"
         );   
         //@f:on
 
-        priorityComboBox.setValue("Normal");
+        algorithms.setValue("SHA-256");
 
-        EventHandler<ActionEvent> value = new EventHandler<ActionEvent>()
+        fileChooserButton.setOnAction(new EventHandler<ActionEvent>()
+        {
+            @Override
+            public void handle(ActionEvent event)
+            {
+                fileSelected = fileChooser.showOpenDialog(stage);
+                text.setText("");
+                selectedFilePath.setText("");
+                selectedFilePath.setText(fileSelected.getPath());
+            }
+        });
+        checksumCalculateButton.setOnAction(new EventHandler<ActionEvent>()
         {
 
             @Override
             public void handle(ActionEvent event)
             {
-                subject.getText();
+                if (fileSelected != null)
+                {
+                    selectedFilePath.setText(fileSelected.getPath());
+                    try
+                    {
+                        text.setText(GenerateSecureChecksum.getChecksum(fileSelected));
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
                 System.out.println(event.toString());
-
             }
-        };
+        });
 
-        button.setOnAction(value);
         GridPane grid = new GridPane();
         grid.setVgap(4);
         grid.setHgap(10);
@@ -91,11 +122,12 @@ public class Application extends javafx.application.Application
         grid.add(new Label("To: "), 0, 0);
         grid.add(emailComboBox, 1, 0);
         grid.add(new Label("Priority: "), 2, 0);
-        grid.add(priorityComboBox, 3, 0);
-        grid.add(new Label("Subject: "), 0, 1);
-        grid.add(subject, 1, 1, 3, 1);
+        //        grid.add(algorithms, 3, 0);
+        grid.add(fileChooserButton, 0, 1);
+        grid.add(selectedFilePath, 1, 1, 3, 1);
         grid.add(text, 0, 2, 4, 1);
-        grid.add(button, 0, 3);
+        grid.add(checksumCalculateButton, 0, 3);
+        grid.add(algorithms, 1, 3);
         grid.add(notification, 1, 3, 3, 1);
 
         menuBar.getMenus().addAll(menuFile, menuEdit, menuView);
