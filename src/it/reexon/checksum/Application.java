@@ -5,6 +5,7 @@ package it.reexon.checksum;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import it.reexon.lib.security.checksums.GenerateSecureChecksum;
 import javafx.event.ActionEvent;
@@ -31,22 +32,20 @@ import javafx.stage.Stage;
 public class Application extends javafx.application.Application
 {
 
-    final Button checksumCalculateButton = new Button("Calculate");
-    final Button fileChooserButton = new Button("Load File");
+    private final Button checksumCalculateButton = new Button("Calculate");
+    private final Button fileChooserButton = new Button("Load File");
 
-    final Label notification = new Label();
-    final TextField selectedFilePath = new TextField("");
-    final TextArea text = new TextArea("");
+    private final Label notification = new Label();
+    private final TextField selectedFilePath = new TextField("");
+    private final TextArea text = new TextArea("");
 
-    String address = new String(" ");
-
-    File fileSelected;
+    private File fileSelected;
 
     @Override
     public void start(Stage stage)
     {
-        stage.setTitle("Menu Sample");
-        Scene scene = new Scene(new VBox(), 430, 350);
+        stage.setTitle("Checksum Calculates");
+        Scene scene = new Scene(new VBox(), 450, 350);
 
         MenuBar menuBar = new MenuBar();
         Menu menuFile = new Menu("File");
@@ -56,31 +55,19 @@ public class Application extends javafx.application.Application
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File..");
 
-        final ComboBox<String> emailComboBox = new ComboBox<String>();
-        //@f:off
-        emailComboBox.getItems().addAll(
-            "jacob.smith@example.com",
-            "isabella.johnson@example.com",
-            "ethan.williams@example.com",
-            "emma.jones@example.com",
-            "michael.brown@example.com"  
-        );
-            //@f:on
-
         final ComboBox<String> algorithms = new ComboBox<String>();
         //@f:off
         algorithms.getItems().addAll(
             "MD2",
             "MD5",
             "SHA-1",
-            "SHA-256",
             "SHA-224",
+            "SHA-256",
             "SHA-384",
             "SHA-512"
         );   
-        //@f:on
-
         algorithms.setValue("SHA-256");
+        //@f:on
 
         fileChooserButton.setOnAction(new EventHandler<ActionEvent>()
         {
@@ -104,9 +91,14 @@ public class Application extends javafx.application.Application
                     selectedFilePath.setText(fileSelected.getPath());
                     try
                     {
-                        text.setText(GenerateSecureChecksum.getChecksum(fileSelected));
+                        String algoritm = algorithms.getSelectionModel().getSelectedItem();
+                        text.setText(GenerateSecureChecksum.getChecksum(fileSelected, algoritm));
                     }
                     catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    catch (NoSuchAlgorithmException e)
                     {
                         e.printStackTrace();
                     }
@@ -116,16 +108,12 @@ public class Application extends javafx.application.Application
         });
 
         GridPane grid = new GridPane();
-        grid.setVgap(4);
-        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setHgap(15);
         grid.setPadding(new Insets(5, 5, 5, 5));
-        grid.add(new Label("To: "), 0, 0);
-        grid.add(emailComboBox, 1, 0);
-        grid.add(new Label("Priority: "), 2, 0);
-        //        grid.add(algorithms, 3, 0);
         grid.add(fileChooserButton, 0, 1);
-        grid.add(selectedFilePath, 1, 1, 3, 1);
-        grid.add(text, 0, 2, 4, 1);
+        grid.add(selectedFilePath, 1, 1, 10, 1);
+        grid.add(text, 0, 2, 10, 1);
         grid.add(checksumCalculateButton, 0, 3);
         grid.add(algorithms, 1, 3);
         grid.add(notification, 1, 3, 3, 1);
