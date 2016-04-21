@@ -4,10 +4,11 @@
 package it.reexon.checksum;
 
 import java.io.File;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.util.Calendar;
+import java.util.Date;
 
 import it.reexon.lib.security.checksums.GenerateSecureChecksum;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -17,6 +18,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -38,11 +40,11 @@ public class Application extends javafx.application.Application
     private final Label notification = new Label();
     private final TextField selectedFilePath = new TextField("");
     private final TextArea text = new TextArea("");
-
+    private final ProgressIndicator progressIndicator = new ProgressIndicator();
     private File fileSelected;
 
     @Override
-    public void start(Stage stage)
+    public void start(Stage stage) throws InterruptedException
     {
         stage.setTitle("Checksum Calculates");
         Scene scene = new Scene(new VBox(), 450, 350);
@@ -51,6 +53,8 @@ public class Application extends javafx.application.Application
         Menu menuFile = new Menu("File");
         Menu menuEdit = new Menu("Edit");
         Menu menuView = new Menu("View");
+
+        progressIndicator.setVisible(false);
 
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File..");
@@ -92,15 +96,36 @@ public class Application extends javafx.application.Application
                     try
                     {
                         String algoritm = algorithms.getSelectionModel().getSelectedItem();
-                        text.setText(GenerateSecureChecksum.getChecksum(fileSelected, algoritm));
+                        Task<String> generaChecksum = new Task<String>()
+                        {
+                            @Override
+                            protected String call() throws Exception
+                            {
+                                Date startDate = new Date();
+                                String checksum = GenerateSecureChecksum.getChecksum(fileSelected, algoritm);
+                                Date endDate = new Date();
+                                long different = endDate.getTime() - startDate.getTime();
+                                Calendar c = new Calendar.Builder().setInstant(different).build();
+                                System.out.println(c.get(Calendar.SECOND) + " s - " + "checksum: " + checksum);
+                                return checksum;
+                            }
+                        };
+                        Thread th = new Thread(generaChecksum);
+                        th.setDaemon(true);
+                        th.start();
+
+                        String checksum = generaChecksum.get();
+                        text.setText(checksum);
+
+                        progressIndicator.progressProperty().bind(generaChecksum.progressProperty());
                     }
-                    catch (IOException e)
+                    catch (Exception e)
                     {
                         e.printStackTrace();
                     }
-                    catch (NoSuchAlgorithmException e)
+                    finally
                     {
-                        e.printStackTrace();
+                        progressIndicator.setVisible(false);
                     }
                 }
                 System.out.println(event.toString());
@@ -121,9 +146,11 @@ public class Application extends javafx.application.Application
         menuBar.getMenus().addAll(menuFile, menuEdit, menuView);
         ((VBox) scene.getRoot()).getChildren().addAll(menuBar);
         ((VBox) scene.getRoot()).getChildren().add(grid);
+        ((VBox) scene.getRoot()).getChildren().add(progressIndicator);
 
         stage.setScene(scene);
         stage.show();
+
     }
 
     public static void main(String[] args)
