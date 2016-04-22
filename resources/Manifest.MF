@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Sealed: true
+Main-Class: it.reexon.checksum.Application
+Created-By: Marco Velluto
+Built-By: Marco Velluto
+Build-Jdk: 1.8.0_77
+Build-Java: 1.8.0_77
+Build-Label: 1.0.0-SNAPSHOT
+Build-OS: Windows 10

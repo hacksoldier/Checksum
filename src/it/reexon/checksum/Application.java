@@ -21,6 +21,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -48,7 +49,7 @@ public class Application extends javafx.application.Application
     {
         stage.setTitle("Checksum Calculates");
         Scene scene = new Scene(new VBox(), 450, 350);
-
+        stage.getIcons().add(new Image("file:resources/icon.png"));
         MenuBar menuBar = new MenuBar();
         Menu menuFile = new Menu("File");
         Menu menuEdit = new Menu("Edit");
