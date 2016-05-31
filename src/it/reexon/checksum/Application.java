@@ -4,9 +4,12 @@
 package it.reexon.checksum;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.stream.Collectors;
 
+import it.reexon.lib.security.algorithms.MessageDigestAlgorithms;
 import it.reexon.lib.security.checksums.GenerateSecureChecksum;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -22,6 +25,11 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -62,16 +70,8 @@ public class Application extends javafx.application.Application
 
         final ComboBox<String> algorithms = new ComboBox<String>();
         //@f:off
-        algorithms.getItems().addAll(
-            "MD2",
-            "MD5",
-            "SHA-1",
-            "SHA-224",
-            "SHA-256",
-            "SHA-384",
-            "SHA-512"
-        );   
-        algorithms.setValue("SHA-256");
+        algorithms.getItems().addAll(Arrays.asList(MessageDigestAlgorithms.values()).stream().map(p -> p.getName()).collect(Collectors.toList()));
+        algorithms.setValue(MessageDigestAlgorithms.SHA_256.getName());
         //@f:on
 
         fileChooserButton.setOnAction(new EventHandler<ActionEvent>()
@@ -83,11 +83,11 @@ public class Application extends javafx.application.Application
                 text.setText("");
                 selectedFilePath.setText("");
                 selectedFilePath.setText(fileSelected.getPath());
+                fileChooser.setInitialDirectory(fileSelected.getParentFile());
             }
         });
         checksumCalculateButton.setOnAction(new EventHandler<ActionEvent>()
         {
-
             @Override
             public void handle(ActionEvent event)
             {
@@ -96,14 +96,15 @@ public class Application extends javafx.application.Application
                     selectedFilePath.setText(fileSelected.getPath());
                     try
                     {
-                        String algoritm = algorithms.getSelectionModel().getSelectedItem();
+                        String algoritmName = algorithms.getSelectionModel().getSelectedItem();
                         Task<String> generaChecksum = new Task<String>()
                         {
                             @Override
-                            protected String call() throws Exception
+                            protected synchronized String call() throws Exception
                             {
                                 Date startDate = new Date();
-                                String checksum = GenerateSecureChecksum.getChecksum(fileSelected, algoritm);
+                                String checksum = GenerateSecureChecksum.getChecksum(fileSelected,
+                                                                                     MessageDigestAlgorithms.valueOf(algoritmName.replace("-", "_")));
                                 Date endDate = new Date();
                                 long different = endDate.getTime() - startDate.getTime();
                                 Calendar c = new Calendar.Builder().setInstant(different).build();
@@ -112,7 +113,6 @@ public class Application extends javafx.application.Application
                             }
                         };
                         Thread th = new Thread(generaChecksum);
-                        th.setDaemon(true);
                         th.start();
 
                         String checksum = generaChecksum.get();
@@ -132,7 +132,6 @@ public class Application extends javafx.application.Application
                 System.out.println(event.toString());
             }
         });
-
         GridPane grid = new GridPane();
         grid.setVgap(10);
         grid.setHgap(15);
